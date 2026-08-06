@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { isDemoMode } from "./demo";
 
 interface EnviarInvitacionParams {
   to: string;
@@ -21,6 +22,11 @@ export async function enviarInvitacion({
   pin,
   nombreBoda,
 }: EnviarInvitacionParams) {
+  if (isDemoMode()) {
+    console.log(`[demo] Invitación para ${nombre} <${to}>: ${link} (PIN ${pin})`);
+    return { data: null, error: null };
+  }
+
   const resend = getResend();
   const from = process.env.RESEND_FROM_EMAIL ?? "invitaciones@resend.dev";
 

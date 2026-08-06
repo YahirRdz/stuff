@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -21,6 +21,14 @@ interface ResultadoCreacion {
 }
 
 export default function CrearInvitadosPage() {
+  return (
+    <Suspense fallback={<p className="text-gray-500">Cargando...</p>}>
+      <CrearInvitadosContent />
+    </Suspense>
+  );
+}
+
+function CrearInvitadosContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const bodaId = searchParams.get("boda_id") ?? "";

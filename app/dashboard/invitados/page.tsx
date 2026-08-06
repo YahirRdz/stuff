@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -13,6 +13,7 @@ interface Invitado {
   max_acompanantes: number;
   num_acompanantes: number;
   confirmado_at: string | null;
+  magic_token: string;
 }
 
 const ESTADO_LABEL: Record<Invitado["estado"], string> = {
@@ -32,6 +33,14 @@ const ESTADO_COLOR: Record<Invitado["estado"], string> = {
 };
 
 export default function InvitadosPage() {
+  return (
+    <Suspense fallback={<p className="text-gray-500">Cargando...</p>}>
+      <InvitadosContent />
+    </Suspense>
+  );
+}
+
+function InvitadosContent() {
   const searchParams = useSearchParams();
   const bodaId = searchParams.get("boda_id") ?? "";
 
@@ -41,9 +50,13 @@ export default function InvitadosPage() {
   const [loading, setLoading] = useState(true);
   const [reenviando, setReenviando] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
-    if (!bodaId) return;
+    if (!bodaId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const query = new URLSearchParams({ boda_id: bodaId });
     if (filtroEstado) query.set("estado", filtroEstado);
@@ -69,6 +82,13 @@ export default function InvitadosPage() {
     setMensaje(res.ok ? `Invitación reenviada a ${data.email}` : data.mensaje ?? "Error al reenviar");
   }
 
+  async function copiarLink(inv: Invitado) {
+    const link = `${window.location.origin}/confirmar/${inv.magic_token}`;
+    await navigator.clipboard.writeText(link);
+    setCopiado(inv.id);
+    setTimeout(() => setCopiado((actual) => (actual === inv.id ? null : actual)), 2000);
+  }
+
   function exportarCsv() {
     const header = ["Nombre", "Email", "Teléfono", "Estado", "Acompañantes", "Confirmado el"];
     const filas = invitados.map((i) => [
@@ -87,6 +107,18 @@ export default function InvitadosPage() {
     a.download = "invitados.csv";
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  if (!bodaId) {
+    return (
+      <p className="text-gray-500">
+        Falta indicar la boda.{" "}
+        <Link href="/dashboard" className="underline">
+          Vuelve al inicio
+        </Link>
+        .
+      </p>
+    );
   }
 
   return (
@@ -165,13 +197,18 @@ export default function InvitadosPage() {
                     {inv.num_acompanantes} / {inv.max_acompanantes}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => reenviarLink(inv.id)}
-                      disabled={reenviando === inv.id}
-                      className="text-blue-600 hover:underline disabled:opacity-50"
-                    >
-                      {reenviando === inv.id ? "Enviando..." : "Reenviar"}
-                    </button>
+                    <div className="flex justify-end gap-3">
+                      <button onClick={() => copiarLink(inv)} className="text-blue-600 hover:underline">
+                        {copiado === inv.id ? "¡Copiado!" : "Copiar link"}
+                      </button>
+                      <button
+                        onClick={() => reenviarLink(inv.id)}
+                        disabled={reenviando === inv.id}
+                        className="text-blue-600 hover:underline disabled:opacity-50"
+                      >
+                        {reenviando === inv.id ? "Enviando..." : "Reenviar"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

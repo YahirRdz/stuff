@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { isDemoMode } from "@/lib/demo";
 
 type Paso = "cargando" | "pin" | "responder" | "gracias" | "error";
 
@@ -156,6 +157,9 @@ export default function ConfirmarPage() {
               {pinLoading ? "Verificando..." : "Continuar"}
             </button>
           </form>
+          {isDemoMode() && (
+            <p className="mt-4 text-center text-sm text-gray-400">🎭 Modo demo — usa el PIN 1234</p>
+          )}
         </div>
       )}
 

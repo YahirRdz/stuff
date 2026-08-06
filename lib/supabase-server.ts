@@ -1,11 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { isDemoMode } from "./demo";
+import { createDemoSupabaseClient } from "./demo-db";
 
 /**
  * Server-side Supabase client bound to the current user's session cookies.
- * Respects RLS as the logged-in novio/colaborador.
+ * Respects RLS as the logged-in novio/colaborador. In DEMO_MODE, returns the
+ * in-memory demo client instead, always "logged in" as the fixed demo user.
  */
-export async function createServerSupabaseClient() {
+export async function createServerSupabaseClient(): Promise<SupabaseClient> {
+  if (isDemoMode()) {
+    return createDemoSupabaseClient() as unknown as SupabaseClient;
+  }
+
   const cookieStore = await cookies();
 
   return createServerClient(

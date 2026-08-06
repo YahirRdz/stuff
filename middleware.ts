@@ -1,7 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isDemoMode } from "./lib/demo";
 
 export async function middleware(request: NextRequest) {
+  if (isDemoMode()) {
+    // No real auth in demo mode: everyone is "logged in" as the fixed demo user,
+    // and there's nothing to authenticate against, so /auth/* just bounces to /dashboard.
+    if (request.nextUrl.pathname.startsWith("/auth") && request.nextUrl.pathname !== "/auth/callback") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

@@ -2,8 +2,17 @@ import { randomInt } from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { PIN_LENGTH, SESION_JWT_MINUTOS } from "./constants";
+import { isDemoMode } from "./demo";
 
 const BCRYPT_ROUNDS = 10;
+const DEMO_JWT_SECRET = "demo-mode-secret-not-for-production-use";
+
+function getSessionSecret(): string {
+  const secret = process.env.SESSION_JWT_SECRET;
+  if (secret) return secret;
+  if (isDemoMode()) return DEMO_JWT_SECRET;
+  throw new Error("Missing SESSION_JWT_SECRET env var");
+}
 
 export function generarPin(): string {
   const min = 10 ** (PIN_LENGTH - 1);
@@ -24,20 +33,14 @@ interface SesionPayload {
 }
 
 export function crearSesionToken(invitadoId: string): string {
-  const secret = process.env.SESSION_JWT_SECRET;
-  if (!secret) throw new Error("Missing SESSION_JWT_SECRET env var");
-
-  return jwt.sign({ invitadoId } satisfies SesionPayload, secret, {
+  return jwt.sign({ invitadoId } satisfies SesionPayload, getSessionSecret(), {
     expiresIn: `${SESION_JWT_MINUTOS}m`,
   });
 }
 
 export function verificarSesionToken(token: string): SesionPayload | null {
-  const secret = process.env.SESSION_JWT_SECRET;
-  if (!secret) throw new Error("Missing SESSION_JWT_SECRET env var");
-
   try {
-    return jwt.verify(token, secret) as SesionPayload;
+    return jwt.verify(token, getSessionSecret()) as SesionPayload;
   } catch {
     return null;
   }

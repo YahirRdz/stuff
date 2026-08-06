@@ -12,6 +12,25 @@ completa de cada cambio de estado.
 - Resend para el envío de emails de invitación
 - Sesiones de invitados vía JWT de corta duración (15 min) emitido tras verificar el PIN
 
+## 0. Probar sin Supabase (modo demo)
+
+Para ver la app funcionando de inmediato, sin crear ningún proyecto ni cuenta:
+
+```bash
+npm install
+NEXT_PUBLIC_DEMO_MODE=true npm run dev
+```
+
+Abre [http://localhost:3000/dashboard](http://localhost:3000/dashboard) — entras directo, sin
+login, a una boda de ejemplo con 8 invitados en distintos estados (confirmados, pendientes,
+declinados). Desde ahí puedes usar "Copiar link" en cualquier invitado y probar el flujo de
+confirmación en `/confirmar/[token]`: el PIN de todos los invitados demo es **1234**.
+
+En este modo, los datos viven solo en memoria del proceso (se reinician si reinicias el
+servidor), no se envían emails reales (se registran en la consola del servidor), y no hace falta
+ninguna credencial de Supabase o Resend. Es útil para hacer una demo o probar el flujo antes de
+montar la infraestructura real; **no lo actives en producción**.
+
 ## 1. Crear el proyecto de Supabase
 
 1. Crea un proyecto en [supabase.com](https://supabase.com).

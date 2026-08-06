@@ -13,13 +13,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const { data: invitado, error: fetchError } = await auth.supabase
     .from("invitados")
-    .select("id, nombre, email, magic_token, boda_id, bodas(nombre)")
+    .select("id, nombre, email, magic_token, boda_id")
     .eq("id", id)
     .maybeSingle();
 
   if (fetchError || !invitado) {
     return NextResponse.json({ mensaje: "Invitado no encontrado" }, { status: 404 });
   }
+
+  const { data: boda } = await auth.supabase
+    .from("bodas")
+    .select("nombre")
+    .eq("id", invitado.boda_id)
+    .maybeSingle();
 
   const nuevoPin = generarPin();
   const nuevoPinHash = await hashPin(nuevoPin);
@@ -41,7 +47,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
   const link = `${baseUrl}/confirmar/${invitado.magic_token}`;
-  const nombreBoda = (invitado.bodas as unknown as { nombre: string } | null)?.nombre ?? "la boda";
+  const nombreBoda = boda?.nombre ?? "la boda";
 
   await enviarInvitacion({ to: invitado.email, nombre: invitado.nombre, link, pin: nuevoPin, nombreBoda });
 
